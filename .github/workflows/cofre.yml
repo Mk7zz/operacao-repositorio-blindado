@@ -1,0 +1,15 @@
+
+name: Teste do Cofre
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  testar-cofre:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Testar chave mestra
+        run: echo "Minha chave é ${{ secrets.CHAVE_MESTRA }}"
