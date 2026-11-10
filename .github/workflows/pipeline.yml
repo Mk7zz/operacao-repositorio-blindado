@@ -1,0 +1,44 @@
+
+name: Pipeline de Entrega
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+
+  validar-html:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Validar HTML
+        run: npx --yes htmlhint@1 index.html
+
+  validar-css:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Validar CSS
+        run: npx --yes prettier@3 --check style.css
+
+  preparar-entrega:
+    needs: [validar-html, validar-css]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Criar pasta de entrega
+        run: |
+          mkdir -p dist
+          cp index.html style.css dist/
+          ls -la dist
