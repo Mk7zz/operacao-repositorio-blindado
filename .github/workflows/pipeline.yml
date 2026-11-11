@@ -1,44 +1,70 @@
 
-name: Pipeline de Entrega
+name: Esteira Completa CI-CD
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
 
-  validar-html:
+  # JOB 1 - TEST
+  test:
+    name: Job 1 - Test
     runs-on: ubuntu-latest
+
     steps:
-      - name: Baixar código
+      - name: Baixar codigo
         uses: actions/checkout@v4
 
       - name: Validar HTML
-        run: npx --yes htmlhint@1 index.html
-
-  validar-css:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Baixar código
-        uses: actions/checkout@v4
+        uses: htmlhint/htmlhint-action@v1
+        with:
+          target_pattern: 'index.html'
 
       - name: Validar CSS
         run: npx --yes prettier@3 --check style.css
 
-  preparar-entrega:
-    needs: [validar-html, validar-css]
+  # JOB 2 - BUILD
+  build:
+    name: Job 2 - Build
+    needs: test
     runs-on: ubuntu-latest
+
     steps:
-      - name: Baixar código
+      - name: Baixar codigo
         uses: actions/checkout@v4
 
-      - name: Criar pasta de entrega
+      - name: Criar pasta dist
         run: |
           mkdir -p dist
           cp index.html style.css dist/
-          ls -la dist
+
+      - name: Upload do artefato
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  # JOB 3 - DEPLOY
+  deploy:
+    name: Job 3 - Deploy
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
